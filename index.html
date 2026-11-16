@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medication Leaflet Helper</title>
+<style>
+  :root { --fs: 18px; --bg:#ffffff; --fg:#1a1a1a; --muted:#444444; --accent:#0b4f8a; --accent-fg:#ffffff;
+          --user:#e3eefb; --bot:#f2f2f2; --border:#6b6b6b; --warn:#7a2e00; --warn-bg:#fff1e6; --ok-bg:#e6f4ea; --alert-bg:#fde8e8; }
+  body.contrast { --bg:#000000; --fg:#ffffff; --muted:#f0f0f0; --accent:#ffe600; --accent-fg:#000000;
+          --user:#10243d; --bot:#1c1c1c; --border:#ffffff; --warn:#ffd9b3; --warn-bg:#2b1600; --ok-bg:#0d2b14; --alert-bg:#3a0d0d; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Arial, "Segoe UI", sans-serif; font-size: var(--fs); line-height:1.5; background:var(--bg); color:var(--fg); }
+  a.skip { position:absolute; inset-inline-start:0; top:0; transform:translateY(-150%); background:var(--accent); color:var(--accent-fg); padding:.5rem 1rem; z-index:10; }
+  a.skip:focus { transform:translateY(0); }
+  header, main, footer { max-width: 52rem; margin: 0 auto; padding: .75rem 1rem; }
+  h1 { font-size: 1.4rem; margin:.2rem 0; }
+  h2 { font-size: 1.1rem; margin:.4rem 0; }
+  .toolbar { display:flex; flex-wrap:wrap; gap:.5rem; margin:.5rem 0; }
+  button, select, input, textarea { font: inherit; color: var(--fg); background: var(--bg); border:2px solid var(--border); border-radius:.5rem; padding:.45rem .8rem; }
+  button { cursor:pointer; min-height:2.75rem; }
+  button.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); font-weight:bold; }
+  button[aria-pressed="true"] { outline:3px solid var(--accent); }
+  :focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  #stepper { border-left:.4rem solid var(--accent); padding:.4rem .8rem; background:var(--bot); margin:.5rem 0; }
+  #log { border:2px solid var(--border); border-radius:.6rem; padding:.6rem; min-height:14rem; max-height:55vh; overflow:auto; }
+  .msg { margin:.6rem 0; padding:.6rem .8rem; border-radius:.6rem; border:1px solid var(--border); }
+  .msg.user { background:var(--user); }
+  .msg.bot { background:var(--bot); }
+  .who { font-weight:bold; display:block; margin-bottom:.2rem; }
+  .status { display:inline-block; padding:.1rem .6rem; border:2px solid var(--border); border-radius:1rem; font-weight:bold; margin:.2rem 0; }
+  .status.answered { background:var(--ok-bg); } .status.fallback, .status.clarify, .status.error { background:var(--warn-bg); }
+  .status.boundary, .status.urgent { background:var(--alert-bg); }
+  .source { border:2px dashed var(--border); border-radius:.5rem; padding:.5rem .7rem; margin:.5rem 0; }
+  .source b { display:block; }
+  mark { background:#ffe08a; color:#1a1a1a; padding:0 .15rem; font-weight:bold; }
+  body.contrast mark { background:#ffe600; color:#000; }
+  .example-tag { font-weight:bold; color:var(--warn); }
+  details { margin:.3rem 0; } summary { cursor:pointer; }
+  .row { display:flex; flex-wrap:wrap; gap:.5rem; margin:.5rem 0; }
+  .fb { font-size:.9rem; }
+  form { display:flex; gap:.5rem; align-items:flex-end; flex-wrap:wrap; }
+  form .grow { flex:1 1 14rem; display:flex; flex-direction:column; }
+  textarea { width:100%; min-height:7rem; }
+  label { font-weight:bold; }
+  footer { color:var(--muted); font-size:.9rem; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the chat</a>
+<header>
+  <h1 id="title">Medication Leaflet Helper</h1>
+  <p id="tagline">I explain medicine leaflets in plain words. I do not give doses or treatment advice.</p>
+  <div class="toolbar" role="group" aria-label="Settings">
+    <button id="langBtn" type="button" aria-label="Switch language to Arabic">العربية</button>
+    <button id="smaller" type="button" aria-label="Make text smaller">A−</button>
+    <button id="bigger" type="button" aria-label="Make text bigger">A+</button>
+    <button id="contrastBtn" type="button" aria-pressed="false">High contrast</button>
+    <label for="levelSel" id="levelLbl" style="align-self:center">Detail</label>
+    <select id="levelSel"><option value="Simple">Simple</option><option value="Detailed">Detailed</option></select>
+    <button id="helpBtn" type="button">Help</button>
+    <button id="replayBtn" type="button">Replay intro</button>
+  </div>
+  <div id="stepper" role="status" aria-live="polite"></div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div id="helpBox" class="source" hidden>
+    <b id="helpTitle">Help</b>
+    <p id="helpText"></p>
+  </div>
+  <section aria-labelledby="logLabel">
+    <h2 id="logLabel">Conversation</h2>
+    <div id="log" role="log" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
+  </section>
+
+  <section id="leafletPanel" aria-labelledby="leafletLabel" hidden>
+    <h2 id="leafletLabel">Your leaflet</h2>
+    <label for="leafletText" id="leafletTextLabel">Paste the leaflet text here (fictional or public leaflets only)</label>
+    <textarea id="leafletText"></textarea>
+    <div class="row">
+      <button id="sampleBtn" type="button">Use the sample leaflet</button>
+      <button id="clearBtn" type="button">Clear leaflet</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="quickLabel">
+    <h2 id="quickLabel">Quick replies</h2>
+    <div id="quick" class="row" role="group" aria-label="Quick replies"></div>
+  </section>
+
+  <form id="askForm" autocomplete="off" hidden>
+    <div class="grow"><label for="q" id="qLabel">Your question</label><input id="q" type="text" maxlength="500"></div>
+    <button class="primary" type="submit" id="sendBtn">Send</button>
+  </form>
+</main>
+<footer id="foot">This tool explains what a leaflet says. It is not medical advice. For decisions about your medicine, ask a pharmacist or doctor.</footer>
+
+<script>
+const S = {
+ en: {
+  level:"Detail", simple:"Simple", detailed:"Detailed", skip:"Skip the intro",
+  title:"Medication Leaflet Helper", tagline:"I explain medicine leaflets in plain words. I do not give doses or treatment advice.",
+  lang:"العربية", langAria:"Switch language to Arabic", contrast:"High contrast", help:"Help", replay:"Replay intro",
+  conv:"Conversation", quick:"Quick replies", yourLeaflet:"Your leaflet", leafletLabel:"Paste the leaflet text here (fictional or public leaflets only)",
+  sample:"Use the sample leaflet", clear:"Clear leaflet", ask:"Your question", send:"Send", you:"You", bot:"Assistant",
+  foot:"This tool explains what a leaflet says. It is not medical advice. For decisions about your medicine, ask a pharmacist or doctor.",
+  step:(n,txt)=>`Step ${n} of 3: ${txt}`, s1:"I show you an example", s2:"We try it together", s3:"You do it yourself",
+  greet:"Hi! I explain medicine leaflets in plain words. I can explain terms, warnings and side effects that are written in your leaflet. I cannot give doses, diagnose, or tell you whether to take or stop a medicine. For those, please ask your pharmacist or doctor.",
+  exTag:"EXAMPLE (not a live answer)", exQ:"What does contraindicated with MAO inhibitors mean?",
+  exA:"Contraindicated means the medicine must not be used in that situation. Your leaflet says it must not be used together with MAO inhibitors, which are medicines used for depression. Ask your pharmacist whether any of your medicines are in that group.",
+  next1:"Next: try it with me", next2:"Next: I will do it myself", tryQ:"Tap this question to try it:",
+  guide2:"Look at the box under my answer. It shows the exact leaflet sentence I used, so you can check me.",
+  stage3msg:"Now it is your turn. Use the sample leaflet or paste your own, then type a question or tap a quick reply. Tap Help at any time.",
+  qrs:["What is it for?","What are the warnings?","What are the side effects?","Does it interact with other medicines?","What does contraindicated mean?","How many tablets should I take?"],
+  src:"Source from your leaflet", section:"Section", noSrc:"No leaflet sentence is shown because the answer did not come from your leaflet.",
+  terms:"Words explained", readAloud:"Read aloud", fbUnclear:"This was unclear", fbWrong:"This looks wrong", fbMissing:"Something is missing", fbThanks:"Thank you. Your feedback was saved.",
+  thinking:"Reading your leaflet...", fbHead:"Was this helpful?",
+  status:{answered:"Answered from your leaflet", fallback:"Not in your leaflet", boundary:"I cannot advise on this: please ask a pharmacist or doctor", urgent:"Urgent: contact emergency help", clarify:"I need a bit more detail", error:"Something went wrong"},
+  after:["Ask another question","What are the side effects?","Replay intro"],
+  copyQ:"Copy my question for the pharmacist", copied:"Copied.",
+  helpText:"Tap a quick reply or type a question about the leaflet. Use A+ and A− to change text size, High contrast for stronger colours, and Read aloud to hear an answer. If I cannot answer, I will say so and point you to a pharmacist. Replay intro shows the three steps again.",
+  noLeaflet:"Please add a leaflet first, or tap Use the sample leaflet.", networkErr:"I could not reach the server. Your leaflet is still here. Please try again.", tryAgain:"Try again"
+ },
+ ar: {
+  level:"التفصيل", simple:"مبسّط", detailed:"مفصّل", skip:"تخطَّ المقدمة",
+  title:"مساعد نشرة الدواء", tagline:"أشرح نشرات الأدوية بكلمات بسيطة. لا أقدّم جرعات ولا نصائح علاجية.",
+  lang:"English", langAria:"التبديل إلى الإنجليزية", contrast:"تباين عالٍ", help:"مساعدة", replay:"إعادة المقدمة",
+  conv:"المحادثة", quick:"ردود سريعة", yourLeaflet:"النشرة الخاصة بك", leafletLabel:"الصق نص النشرة هنا (نشرات تجريبية أو عامة فقط)",
+  sample:"استخدم النشرة التجريبية", clear:"مسح النشرة", ask:"سؤالك", send:"إرسال", you:"أنت", bot:"المساعد",
+  foot:"هذه الأداة تشرح ما هو مكتوب في النشرة. وهي ليست نصيحة طبية. لأي قرار يخص دواءك اسأل الصيدلي أو الطبيب.",
+  step:(n,txt)=>`الخطوة ${n} من 3: ${txt}`, s1:"أعرض لك مثالاً", s2:"نجرّب معاً", s3:"تجرّب بنفسك",
+  greet:"أهلاً بك! أشرح نشرات الأدوية بكلمات بسيطة. أستطيع شرح المصطلحات والتحذيرات والآثار الجانبية المكتوبة في نشرتك. لا أستطيع إعطاء جرعات أو تشخيص أو القول هل تأخذ الدواء أو توقفه. لهذه الأسئلة اسأل الصيدلي أو الطبيب.",
+  exTag:"مثال (ليس إجابة حقيقية)", exQ:"ماذا يعني أن الدواء ممنوع مع مثبطات MAO؟",
+  exA:"«ممنوع» تعني أنه لا يجوز استخدام الدواء في هذه الحالة. تقول نشرتك إنه لا يجوز استخدامه مع مثبطات MAO، وهي أدوية تُستخدم للاكتئاب. اسأل الصيدلي إن كان أحد أدويتك من هذه المجموعة.",
+  next1:"التالي: جرّب معي", next2:"التالي: سأجرّب بنفسي", tryQ:"اضغط على هذا السؤال لتجربته:",
+  guide2:"انظر إلى المربع تحت إجابتي. يعرض الجملة الأصلية من النشرة التي اعتمدت عليها حتى تتأكد مني.",
+  stage3msg:"الآن دورك. استخدم النشرة التجريبية أو الصق نشرتك، ثم اكتب سؤالاً أو اضغط على رد سريع. اضغط «مساعدة» في أي وقت.",
+  qrs:["ما فائدة الدواء؟","ما التحذيرات؟","ما الآثار الجانبية؟","هل يتداخل مع أدوية أخرى؟","ماذا تعني كلمة ممنوع؟","كم قرصاً أتناول؟"],
+  src:"المصدر من نشرتك", section:"القسم", noSrc:"لا توجد جملة من النشرة لأن الإجابة لم تأتِ من النشرة.",
+  terms:"كلمات مشروحة", readAloud:"اقرأ بصوت عالٍ", fbUnclear:"لم تكن واضحة", fbWrong:"تبدو خاطئة", fbMissing:"ينقصها شيء", fbThanks:"شكراً. تم حفظ ملاحظتك.",
+  thinking:"أقرأ نشرتك...", fbHead:"هل كانت مفيدة؟",
+  status:{answered:"إجابة من نشرتك", fallback:"غير مذكور في نشرتك", boundary:"لا أستطيع النصح في هذا: اسأل الصيدلي أو الطبيب", urgent:"عاجل: اطلب مساعدة الطوارئ", clarify:"أحتاج تفاصيل أكثر", error:"حدث خطأ"},
+  after:["اسأل سؤالاً آخر","ما الآثار الجانبية؟","إعادة المقدمة"],
+  copyQ:"انسخ سؤالي للصيدلي", copied:"تم النسخ.",
+  helpText:"اضغط على رد سريع أو اكتب سؤالاً عن النشرة. استخدم A+ وA− لتغيير حجم الخط، و«تباين عالٍ» لألوان أوضح، و«اقرأ بصوت عالٍ» لسماع الإجابة. إن لم أستطع الإجابة سأخبرك وأوجّهك إلى الصيدلي. «إعادة المقدمة» تعرض الخطوات الثلاث مرة أخرى.",
+  noLeaflet:"من فضلك أضف نشرة أولاً أو اضغط «استخدم النشرة التجريبية».", networkErr:"تعذر الوصول إلى الخادم. نشرتك ما زالت موجودة. حاول مرة أخرى.", tryAgain:"حاول مرة أخرى"
+ }
+};
+// Short plain-language definitions (draft). Review with a pharmacist before real use.
+const GLOSS = [
+ {k:["contraindicated","ممنوع"], en:["contraindicated","Must not be used in this situation."], ar:["ممنوع","لا يجوز استخدامه في هذه الحالة."]},
+ {k:["mao inhibitors","مثبطات mao"], en:["MAO inhibitors","A group of medicines used mainly for depression."], ar:["مثبطات MAO","مجموعة أدوية تُستخدم أساساً للاكتئاب."]},
+ {k:["drowsiness","drowsy","نعاس"], en:["drowsiness","Feeling sleepy or less alert."], ar:["النعاس","الشعور بالنعس وقلة الانتباه."]},
+ {k:["interaction","interact","تداخل"], en:["interaction","When two medicines affect each other."], ar:["التداخل","عندما يؤثر دواءان على بعضهما."]},
+ {k:["ingredient","مكونات"], en:["ingredient","One of the substances the medicine is made of."], ar:["المكوّن","إحدى المواد التي يتكوّن منها الدواء."]}
+];
+const SAMPLE_Q_EN = "What does contraindicated with MAO inhibitors mean?";
+
+let lang = "en", stage = 1, size = 18, lastQuestion = "", sampleLeaflet = "";
+const $ = id => document.getElementById(id);
+const tr = () => S[lang];
+
+function applyLang() {
+  const s = tr();
+  document.documentElement.lang = lang; document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  $("title").textContent = s.title; document.title = s.title; $("tagline").textContent = s.tagline;
+  $("langBtn").textContent = s.lang; $("langBtn").setAttribute("aria-label", s.langAria);
+  $("contrastBtn").textContent = s.contrast; $("helpBtn").textContent = s.help; $("replayBtn").textContent = s.replay;
+  $("logLabel").textContent = s.conv; $("quickLabel").textContent = s.quick; $("leafletLabel").textContent = s.yourLeaflet;
+  $("leafletTextLabel").textContent = s.leafletLabel; $("sampleBtn").textContent = s.sample; $("clearBtn").textContent = s.clear;
+  $("qLabel").textContent = s.ask; $("sendBtn").textContent = s.send; $("foot").textContent = s.foot;
+  $("levelLbl").textContent = s.level; $("levelSel").options[0].text = s.simple; $("levelSel").options[1].text = s.detailed;
+  $("helpTitle").textContent = s.help; $("helpText").textContent = s.helpText;
+  $("smaller").setAttribute("aria-label", lang === "ar" ? "تصغير الخط" : "Make text smaller");
+  $("bigger").setAttribute("aria-label", lang === "ar" ? "تكبير الخط" : "Make text bigger");
+  setStepper();
+}
+function setStepper() { const s = tr(); $("stepper").textContent = stage <= 3 ? s.step(stage, [s.s1, s.s2, s.s3][stage - 1]) : ""; }
+
+function bubble(who, cls) {
+  const d = document.createElement("div"); d.className = "msg " + cls; d.tabIndex = -1;
+  const w = document.createElement("span"); w.className = "who"; w.textContent = who; d.appendChild(w);
+  $("log").appendChild(d); return d;
+}
+function addText(d, text, tag) { const p = document.createElement("p"); p.style.margin = ".2rem 0"; if (tag) { const t = document.createElement("span"); t.className = "example-tag"; t.textContent = tag + " "; p.appendChild(t); } p.appendChild(document.createTextNode(text)); d.appendChild(p); return p; }
+let userActed = false;
+document.addEventListener("click", () => { userActed = true; }); document.addEventListener("keydown", () => { userActed = true; });
+function scrollEnd(d) { $("log").scrollTop = $("log").scrollHeight; if (d && userActed) d.focus({preventScroll:true}); }
+
+function highlight(p, text, quotes) {
+  const low = text.toLowerCase();
+  for (const q of (quotes || [])) {
+    const k = q.trim().replace(/\.$/, "").toLowerCase(); const i = k ? low.indexOf(k) : -1;
+    if (i >= 0) { p.appendChild(document.createTextNode(text.slice(0, i))); const m = document.createElement("mark"); m.textContent = text.slice(i, i + k.length); p.appendChild(m); p.appendChild(document.createTextNode(text.slice(i + k.length))); return; }
+  }
+  p.appendChild(document.createTextNode(text));
+}
+function sourceBox(parent, sources, quotes) {
+  const s = tr(); const box = document.createElement("div"); box.className = "source";
+  const b = document.createElement("b"); b.textContent = s.src; box.appendChild(b);
+  if (!sources || !sources.length) { box.appendChild(document.createTextNode(s.noSrc)); parent.appendChild(box); return; }
+  sources.forEach(c => { const p = document.createElement("p"); p.dir = "auto"; p.style.margin = ".2rem 0"; const lab = document.createElement("b"); lab.style.display = "inline"; lab.textContent = `${s.section}: ${c.section} (${c.id}). `; p.appendChild(lab); highlight(p, c.text, quotes); box.appendChild(p); });
+  parent.appendChild(box);
+}
+function termChips(parent, text) {
+  const s = tr(); const low = text.toLowerCase(); const found = GLOSS.filter(g => g.k.some(k => low.includes(k)));
+  if (!found.length) return;
+  const h = document.createElement("b"); h.textContent = s.terms; parent.appendChild(h);
+  found.forEach(g => { const d = document.createElement("details"); const sm = document.createElement("summary"); const [w, def] = g[lang]; sm.textContent = w; d.appendChild(sm); const p = document.createElement("p"); p.style.margin = ".2rem 1rem"; p.textContent = def; d.appendChild(p); parent.appendChild(d); });
+}
+function speak(text) { if (!("speechSynthesis" in window)) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = lang === "ar" ? "ar-EG" : "en-US"; speechSynthesis.speak(u); }
+
+function addAnswer(data, question) {
+  const s = tr(); const d = bubble(s.bot, "bot");
+  const st = document.createElement("div"); st.className = "status " + data.status; st.textContent = "Status: ".replace("Status", lang === "ar" ? "الحالة" : "Status") + s.status[data.status]; d.appendChild(st);
+  addText(d, data.reply);
+  if (data.status === "answered") { sourceBox(d, data.sources, data.quotes); termChips(d, data.reply + " " + (data.sources || []).map(x => x.text).join(" ")); }
+  const row = document.createElement("div"); row.className = "row";
+  const ra = document.createElement("button"); ra.type = "button"; ra.className = "fb"; ra.textContent = s.readAloud; ra.addEventListener("click", () => speak(data.reply)); row.appendChild(ra);
+  if (data.status === "boundary" || data.status === "urgent" || data.status === "fallback") {
+    const cp = document.createElement("button"); cp.type = "button"; cp.className = "fb"; cp.textContent = s.copyQ;
+    cp.addEventListener("click", () => { navigator.clipboard && navigator.clipboard.writeText(question); cp.textContent = s.copied; }); row.appendChild(cp);
+  }
+  d.appendChild(row);
+  if (stage === 3) {
+    const fh = document.createElement("b"); fh.textContent = s.fbHead; d.appendChild(fh);
+    const fr = document.createElement("div"); fr.className = "row";
+    [["unclear", s.fbUnclear], ["wrong", s.fbWrong], ["missing", s.fbMissing]].forEach(([reason, label]) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "fb"; b.textContent = label;
+      b.addEventListener("click", async () => { try { await fetch("/feedback", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({answer_id: data.answer_id, reason, status: data.status})}); const m = document.createElement("p"); m.setAttribute("role", "status"); m.textContent = s.fbThanks; fr.replaceWith(m); } catch (e) {} });
+      fr.appendChild(b);
+    });
+    d.appendChild(fr);
+  }
+  scrollEnd(d); return d;
+}
+
+function setQuick(items) {
+  const q = $("quick"); q.textContent = "";
+  items.forEach(it => { const b = document.createElement("button"); b.type = "button"; b.textContent = it.label; if (it.primary) b.className = "primary"; b.addEventListener("click", it.fn); q.appendChild(b); });
+}
+
+async function askServer(question, shown) {
+  const s = tr(); lastQuestion = question;
+  const u = bubble(s.you, "user"); addText(u, shown || question);
+  const wait = bubble(s.bot, "bot"); addText(wait, s.thinking); scrollEnd(wait);
+  const leaflet = stage === 3 ? $("leafletText").value : sampleLeaflet;
+  if (!leaflet.trim()) { wait.remove(); const d = bubble(s.bot, "bot"); addText(d, s.noLeaflet); scrollEnd(d); return null; }
+  try {
+    const r = await fetch("/chat", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({message: question, leaflet_text: leaflet, language: lang === "ar" ? "Arabic" : "English", level: $("levelSel").value})});
+    const data = await r.json(); wait.remove(); addAnswer(data, question); return data;
+  } catch (e) {
+    wait.remove(); const d = bubble(s.bot, "bot"); addText(d, s.networkErr);
+    const b = document.createElement("button"); b.type = "button"; b.textContent = s.tryAgain; b.addEventListener("click", () => { d.remove(); askServer(question, shown); }); d.appendChild(b); scrollEnd(d); return null;
+  }
+}
+
+// ---------------- onboarding stages
+function stage1() {
+  stage = 1; setStepper(); $("log").textContent = ""; $("leafletPanel").hidden = true; $("askForm").hidden = true;
+  const s = tr(); const g = bubble(s.bot, "bot"); addText(g, s.greet);
+  const q = bubble(s.you, "user"); addText(q, s.exQ, s.exTag);
+  const a = bubble(s.bot, "bot"); addText(a, s.exA, s.exTag);
+  sourceBox(a, [{id:"S3", section:"Do not take if", text:"Examplamine is contraindicated with MAO inhibitors, a group of medicines used for depression."}], ["contraindicated with MAO inhibitors"]);
+  termChips(a, "contraindicated MAO inhibitors"); scrollEnd(a);
+  setQuick([{label:s.next1, primary:true, fn: stage2}, {label:s.skip, fn: stage3}]);
+}
+function stage2() {
+  stage = 2; setStepper(); const s = tr();
+  const g = bubble(s.bot, "bot"); addText(g, s.tryQ); scrollEnd(g);
+  const qText = lang === "ar" ? S.ar.exQ : SAMPLE_Q_EN;
+  setQuick([{label:s.skip, fn: stage3}, {label:qText, primary:true, fn: async () => {
+    const data = await askServer(SAMPLE_Q_EN, qText);
+    if (data) { const t = bubble(tr().bot, "bot"); addText(t, tr().guide2); scrollEnd(t); setQuick([{label:tr().next2, primary:true, fn: stage3}]); }
+  }}]);
+}
+function stage3() {
+  stage = 3; setStepper(); const s = tr();
+  $("leafletPanel").hidden = false; $("askForm").hidden = false; if (!$("leafletText").value) $("leafletText").value = sampleLeaflet;
+  const g = bubble(s.bot, "bot"); addText(g, s.stage3msg); scrollEnd(g);
+  setQuick(s.qrs.map((label, i) => ({label, fn: () => askServer(S.en.qrs[i], label)})));
+  $("q").focus();
+}
+
+// ---------------- events
+$("askForm").addEventListener("submit", e => { e.preventDefault(); const v = $("q").value.trim(); if (v) { $("q").value = ""; askServer(v); } });
+$("langBtn").addEventListener("click", () => { lang = lang === "en" ? "ar" : "en"; applyLang(); if (stage === 3) setQuick(tr().qrs.map((label, i) => ({label, fn: () => askServer(S.en.qrs[i], label)}))); else if (stage === 1) stage1(); else stage2(); });
+$("bigger").addEventListener("click", () => { size = Math.min(32, size + 2); document.documentElement.style.setProperty("--fs", size + "px"); });
+$("smaller").addEventListener("click", () => { size = Math.max(14, size - 2); document.documentElement.style.setProperty("--fs", size + "px"); });
+$("contrastBtn").addEventListener("click", e => { const on = !document.body.classList.contains("contrast"); document.body.classList.toggle("contrast", on); e.currentTarget.setAttribute("aria-pressed", String(on)); });
+$("helpBtn").addEventListener("click", () => { $("helpBox").hidden = !$("helpBox").hidden; });
+$("replayBtn").addEventListener("click", () => stage1());
+$("sampleBtn").addEventListener("click", () => { $("leafletText").value = sampleLeaflet; });
+$("clearBtn").addEventListener("click", () => { $("leafletText").value = ""; });
+
+(async function init() {
+  try { sampleLeaflet = (await (await fetch("/sample")).json()).leaflet; } catch (e) {}
+  applyLang(); stage1();
+})();
+</script>
+</body>
+</html>
