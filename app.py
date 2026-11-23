@@ -53,11 +53,14 @@ BOUNDARY_PATTERNS = [
     r"\bhow (much|many)\b.*\b(take|dose|tablet|pill|capsule)", r"\bdos(e|age)\b", r"\bshould i (take|stop|skip|double)\b",
     r"\bcan i (stop|skip|double)\b", r"\bcan i (take|have|use)\b(?!.*\bwith\b)", r"\bwhat (do|should) i take for\b", r"\bdo i have\b", r"\bdiagnos",
     r"\bwhich (medicine|drug) is best\b", r"\binstead of\b.*\b(medicine|drug|tablet)",
+    r"\b(recommend|suggest)\b.{0,50}\b(medicine|drug|treatment|tablet)\b",
+    r"\b(is|would)\b.{0,35}\b(safe|right|suitable)\b.{0,20}\bfor me\b",
+    r"\bpersonal(?:ized)?\s+(?:medication\s+)?(?:risk|advice|suitability)\b", r"\bhome (remedy|treatment)\b",
     r"جرعة", r"كام (قرص|حبة|مرة)", r"كم (قرص|حبة|مرة|حبوب)", r"اخد|آخذ|اوقف|أوقف|أبطل",
 ]
 EMERGENCY_PATTERNS = [
     r"chest pain", r"too many (tablets|pills|capsules)|took (extra|too much)|accidentally (took|swallowed)", r"(face|lips|tongue|throat) (is|are|feel|feels|got|became) swollen", r"can.?t breathe|cannot breathe|trouble breathing|short(ness)? of breath", r"swollen (face|lips|tongue|throat)",
-    r"faint(ed|ing)|passed out|unconscious", r"overdos", r"suicid", r"seizure", r"severe allergic",
+    r"faint(ed|ing)|passed out|unconscious", r"overdos", r"suicid", r"seizure", r"severe allergic|severe (allergic )?reaction|anaphylaxis",
     r"ألم في الصدر|مش قادر اتنفس|اغماء|إغماء|جرعة زائدة",
 ]
 
@@ -141,6 +144,7 @@ def call_model(system: str, user: str) -> str:
     response = client.chat.completions.create(
         model=MODEL,
         max_completion_tokens=600,
+        temperature=0,
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": user},

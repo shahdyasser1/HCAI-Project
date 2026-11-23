@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Medication Leaflet Helper</title>
+<title>Medication Safety Literacy Assistant</title>
 <style>
   :root { --fs: 18px; --bg:#ffffff; --fg:#1a1a1a; --muted:#444444; --accent:#0b4f8a; --accent-fg:#ffffff;
           --user:#e3eefb; --bot:#f2f2f2; --border:#6b6b6b; --warn:#7a2e00; --warn-bg:#fff1e6; --ok-bg:#e6f4ea; --alert-bg:#fde8e8; }
@@ -50,7 +50,7 @@
 <body>
 <a class="skip" href="#main">Skip to the chat</a>
 <header>
-  <h1 id="title">Medication Leaflet Helper</h1>
+  <h1 id="title">Medication Safety Literacy Assistant</h1>
   <p id="tagline">I explain medicine leaflets in plain words. I do not give doses or treatment advice.</p>
   <div class="toolbar" role="group" aria-label="Settings">
     <button id="langBtn" type="button" aria-label="Switch language to Arabic">العربية</button>
@@ -101,7 +101,7 @@
 const S = {
  en: {
   level:"Detail", simple:"Simple", detailed:"Detailed", skip:"Skip the intro",
-  title:"Medication Leaflet Helper", tagline:"I explain medicine leaflets in plain words. I do not give doses or treatment advice.",
+  title:"Medication Safety Literacy Assistant", tagline:"I explain medicine leaflets in plain words. I do not give doses or treatment advice.",
   lang:"العربية", langAria:"Switch language to Arabic", contrast:"High contrast", help:"Help", replay:"Replay intro",
   conv:"Conversation", quick:"Quick replies", yourLeaflet:"Your leaflet", leafletLabel:"Paste the leaflet text here (fictional or public leaflets only)",
   sample:"Use the sample leaflet", clear:"Clear leaflet", ask:"Your question", send:"Send", you:"You", bot:"Assistant",
@@ -113,7 +113,7 @@ const S = {
   next1:"Next: try it with me", next2:"Next: I will do it myself", tryQ:"Tap this question to try it:",
   guide2:"Look at the box under my answer. It shows the exact leaflet sentence I used, so you can check me.",
   stage3msg:"Now it is your turn. Use the sample leaflet or paste your own, then type a question or tap a quick reply. Tap Help at any time.",
-  qrs:["What is it for?","What are the warnings?","What are the side effects?","Does it interact with other medicines?","What does contraindicated mean?","How many tablets should I take?"],
+  qrs:["What is it for?","What are the warnings?","What are the side effects?","Does it interact with other medicines?","What does contraindicated mean?","Who should not take this medicine?"],
   src:"Source from your leaflet", section:"Section", noSrc:"No leaflet sentence is shown because the answer did not come from your leaflet.",
   terms:"Words explained", readAloud:"Read aloud", fbUnclear:"This was unclear", fbWrong:"This looks wrong", fbMissing:"Something is missing", fbThanks:"Thank you. Your feedback was saved.",
   thinking:"Reading your leaflet...", fbHead:"Was this helpful?",
@@ -125,7 +125,7 @@ const S = {
  },
  ar: {
   level:"التفصيل", simple:"مبسّط", detailed:"مفصّل", skip:"تخطَّ المقدمة",
-  title:"مساعد نشرة الدواء", tagline:"أشرح نشرات الأدوية بكلمات بسيطة. لا أقدّم جرعات ولا نصائح علاجية.",
+  title:"مساعد شرح نشرات الأدوية", tagline:"أشرح نشرات الأدوية بكلمات بسيطة. لا أقدّم جرعات ولا نصائح علاجية.",
   lang:"English", langAria:"التبديل إلى الإنجليزية", contrast:"تباين عالٍ", help:"مساعدة", replay:"إعادة المقدمة",
   conv:"المحادثة", quick:"ردود سريعة", yourLeaflet:"النشرة الخاصة بك", leafletLabel:"الصق نص النشرة هنا (نشرات تجريبية أو عامة فقط)",
   sample:"استخدم النشرة التجريبية", clear:"مسح النشرة", ask:"سؤالك", send:"إرسال", you:"أنت", bot:"المساعد",
@@ -137,7 +137,7 @@ const S = {
   next1:"التالي: جرّب معي", next2:"التالي: سأجرّب بنفسي", tryQ:"اضغط على هذا السؤال لتجربته:",
   guide2:"انظر إلى المربع تحت إجابتي. يعرض الجملة الأصلية من النشرة التي اعتمدت عليها حتى تتأكد مني.",
   stage3msg:"الآن دورك. استخدم النشرة التجريبية أو الصق نشرتك، ثم اكتب سؤالاً أو اضغط على رد سريع. اضغط «مساعدة» في أي وقت.",
-  qrs:["ما فائدة الدواء؟","ما التحذيرات؟","ما الآثار الجانبية؟","هل يتداخل مع أدوية أخرى؟","ماذا تعني كلمة ممنوع؟","كم قرصاً أتناول؟"],
+  qrs:["ما فائدة الدواء؟","ما التحذيرات؟","ما الآثار الجانبية؟","هل يتداخل مع أدوية أخرى؟","ماذا تعني كلمة ممنوع؟","من لا ينبغي له استخدام هذا الدواء؟"],
   src:"المصدر من نشرتك", section:"القسم", noSrc:"لا توجد جملة من النشرة لأن الإجابة لم تأتِ من النشرة.",
   terms:"كلمات مشروحة", readAloud:"اقرأ بصوت عالٍ", fbUnclear:"لم تكن واضحة", fbWrong:"تبدو خاطئة", fbMissing:"ينقصها شيء", fbThanks:"شكراً. تم حفظ ملاحظتك.",
   thinking:"أقرأ نشرتك...", fbHead:"هل كانت مفيدة؟",
