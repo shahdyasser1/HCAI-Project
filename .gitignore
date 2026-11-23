@@ -1,4 +1,5 @@
+# Never commit these
 .env
-.venv/
-__pycache__/
 feedback.db
+__pycache__/
+.venv/

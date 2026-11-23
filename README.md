@@ -9,6 +9,7 @@ Everything here uses a FICTIONAL sample leaflet ("Examplamine"). Do not put real
 | File | What it is |
 |---|---|
 | `app.py` | FastAPI backend: safeguards, leaflet chunking, retrieval, model call, citation check, feedback log |
+| `streamlit_app.py` | Alternative Streamlit chat interface using the same backend logic |
 | `index.html` | Chat page served at `/` (three-stage onboarding, source box, Arabic/English, large text, high contrast, read aloud) |
 | `test_backend.py` | Offline tests (no API key needed) |
 | `test_first_call.py` | Sends 4 test questions to your running server, which calls the real model |
@@ -22,6 +23,9 @@ Everything here uses a FICTIONAL sample leaflet ("Examplamine"). Do not put real
 5. Open http://127.0.0.1:8000/ in your browser
 
 The default model is `qwen/qwen3.8-27b`; set `MODEL_NAME` to any model ID currently available in the [Groq model list](https://console.groq.com/docs/models). Existing `.env` files may keep using `ANTHROPIC_API_KEY`; `GROQ_API_KEY` is the preferred name.
+
+## Run with Streamlit
+Run `streamlit run streamlit_app.py` to use the Streamlit interface instead of the FastAPI-served page. For Streamlit Community Cloud, add `GROQ_API_KEY` in the app's **Settings → Secrets**. Existing local configurations using `ANTHROPIC_API_KEY` are also supported.
 
 ## Test it
 - `python test_backend.py` runs offline checks of the Groq client configuration, safeguards, citations, retry and error paths.
