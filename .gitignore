@@ -1,0 +1,7 @@
+# Never commit these
+.env
+feedback.db
+__pycache__/
+.venv/
+HAI_Term_Project_2026_File_and_Timeline (1).pdf
+HCAI Project

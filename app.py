@@ -29,7 +29,7 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
-MODEL = os.getenv("MODEL_NAME", "claude-sonnet-5-5")
+MODEL = os.getenv("MODEL_NAME", "qwen/qwen3.8-27b")
 MAX_QUESTION_CHARS = 500
 MAX_LEAFLET_CHARS = 20000
 
@@ -128,13 +128,28 @@ Rules:
 6. Explain medical terms in simple words. Keep the answer under 120 words."""
 
 def call_model(system: str, user: str) -> str:
-    import anthropic  # imported here so the safeguards can be tested without an API key
-    client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
-    response = client.messages.create(
-        model=MODEL, max_tokens=600, system=system,
-        messages=[{"role": "user", "content": user}],
+    from openai import OpenAI
+
+    api_key = os.getenv("LLM_API_KEY") or os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("Set LLM_API_KEY in .env to your Groq API key.")
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url=os.getenv("LLM_BASE_URL") or "https://api.groq.com/openai/v1",
     )
-    return "".join(block.text for block in response.content if block.type == "text")
+    response = client.chat.completions.create(
+        model=MODEL,
+        max_completion_tokens=600,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+    )
+    answer = response.choices[0].message.content
+    if not answer:
+        raise RuntimeError("Groq returned an empty response.")
+    return answer
 
 def verify_citations(answer: str, used_chunks: list[dict]) -> bool:
     """Every [Sx] must be a real chunk ID, and every quoted sentence must appear in a chunk."""

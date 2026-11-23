@@ -12,16 +12,16 @@ Everything here uses a FICTIONAL sample leaflet ("Examplamine"). Do not put real
 | `index.html` | Chat page served at `/` (three-stage onboarding, source box, Arabic/English, large text, high contrast, read aloud) |
 | `test_backend.py` | Offline tests (no API key needed) |
 | `test_first_call.py` | Sends 4 test questions to your running server, which calls the real model |
-| `requirements.txt`, `.env.example` | Dependencies and settings template |
+| `requirements.txt`, `env.example` | Dependencies and Groq settings template |
 
 ## Run it
 1. `python -m venv .venv` and activate it
 2. `pip install -r requirements.txt`
-3. Copy `.env.example` to `.env`, add your own API key. Never commit `.env`.
+3. Copy `env.example` to `.env` and set `LLM_API_KEY` to your Groq API key. Never commit `.env`.
 4. `uvicorn app:app --reload`
 5. Open http://127.0.0.1:8000/ in your browser
 
-Check the model name in `.env` (`MODEL_NAME`) against the model list in your Claude Console.
+The backend uses Groq's OpenAI-compatible API. Set `MODEL_NAME` to a model ID enabled for your Groq account. `LLM_BASE_URL` defaults to `https://api.groq.com/openai/v1`.
 
 ## Test it
 - `python test_backend.py` runs 18 offline checks of the safeguards, citation check, retry and error paths.
