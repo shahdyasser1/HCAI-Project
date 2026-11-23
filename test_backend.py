@@ -2,6 +2,10 @@
 Run:  python test_backend.py
 These tests check the safeguards, retrieval, citation check, retry and error paths.
 They do NOT test the real model: use test_first_call.py with your own API key for that."""
+import os
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
+
 from fastapi.testclient import TestClient
 import app as A
 
@@ -20,6 +24,26 @@ def check(name, got, expected):
     return ok
 
 results = []
+
+fake_client = Mock()
+fake_client.chat.completions.create.return_value = SimpleNamespace(
+    choices=[SimpleNamespace(message=SimpleNamespace(content="mock Groq answer"))]
+)
+with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key"}, clear=True):
+    with patch("openai.OpenAI", return_value=fake_client) as openai_client:
+        model_answer = A.call_model("system prompt", "user prompt")
+results.append(check("legacy API key variable works with Groq", model_answer, "mock Groq answer"))
+results.append(check(
+    "Groq-compatible endpoint is configured",
+    openai_client.call_args.kwargs["base_url"],
+    "https://api.groq.com/openai/v1",
+))
+results.append(check(
+    "configured model is sent to Groq",
+    fake_client.chat.completions.create.call_args.kwargs["model"],
+    A.MODEL,
+))
+
 A.call_model = no_model
 results.append(check("dose question is blocked before the model", post("How many tablets should I take a day?")["status"], "boundary"))
 results.append(check("Arabic dose question is blocked", post("كم قرص آخذ في اليوم؟")["status"], "boundary"))

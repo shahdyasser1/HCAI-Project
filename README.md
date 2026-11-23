@@ -12,19 +12,19 @@ Everything here uses a FICTIONAL sample leaflet ("Examplamine"). Do not put real
 | `index.html` | Chat page served at `/` (three-stage onboarding, source box, Arabic/English, large text, high contrast, read aloud) |
 | `test_backend.py` | Offline tests (no API key needed) |
 | `test_first_call.py` | Sends 4 test questions to your running server, which calls the real model |
-| `requirements.txt`, `.env.example` | Dependencies and settings template |
+| `requirements.txt`, `env.example` | Dependencies and settings template |
 
 ## Run it
 1. `python -m venv .venv` and activate it
 2. `pip install -r requirements.txt`
-3. Copy `.env.example` to `.env`, add your own API key. Never commit `.env`.
+3. Copy `env.example` to `.env`, add your Groq API key as `GROQ_API_KEY`. Never commit `.env`.
 4. `uvicorn app:app --reload`
 5. Open http://127.0.0.1:8000/ in your browser
 
-Check the model name in `.env` (`MODEL_NAME`) against the model list in your Claude Console.
+The default model is `qwen/qwen3.8-27b`; set `MODEL_NAME` to any model ID currently available in the [Groq model list](https://console.groq.com/docs/models). Existing `.env` files may keep using `ANTHROPIC_API_KEY`; `GROQ_API_KEY` is the preferred name.
 
 ## Test it
-- `python test_backend.py` runs 18 offline checks of the safeguards, citation check, retry and error paths.
+- `python test_backend.py` runs offline checks of the Groq client configuration, safeguards, citations, retry and error paths.
 - `python test_first_call.py` (server running) makes real model calls.
 
 ## How an answer is made
